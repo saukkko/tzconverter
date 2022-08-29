@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: build",
+      "command": "npm run build",
+      "type": "shell",
+      "args": [],
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "showReuseMessage": false,
+        "revealProblems": "onProblem",
+        "reveal": "silent",
+        "focus": false
+      },
+      "group": "build"
+    }
+  ]
+}
