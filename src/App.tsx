@@ -5,16 +5,22 @@ function App() {
   const [instant, setInstant] = useState(Temporal.Now.instant());
   const [date, setDate] = useState(0);
   const [time, setTime] = useState(0);
-  const offsetSeconds = useRef(
+  const [offset, setOffset] = useState(
     Temporal.Now.timeZone().getOffsetNanosecondsFor(Temporal.Now.instant()) /
       1e9
   );
-  const [dateTime, setDateTime] = useState(date + time - offsetSeconds.current);
-
+  const [dateTime, setDateTime] = useState(date + time - offset);
+  const outString = useRef({
+    date: date,
+    time: time,
+    offset: offset,
+    selected: dateTime,
+    now: instant.epochSeconds,
+  });
   useEffect(() => {
     const interval = setInterval(() => {
       setInstant(Temporal.Now.instant());
-      setDateTime(date + time - offsetSeconds.current);
+      setDateTime(date + time - offset);
     });
     return () => clearInterval(interval);
   });
@@ -34,15 +40,7 @@ function App() {
           <input type={"date"} onChange={handleDatePicker}></input>
           <input type={"time"} onChange={handleTimePicker}></input>
         </p>
-        <pre>
-          date: {date}
-          <br />
-          time: {time}
-          <br />
-          sel: {dateTime}
-          <br />
-          cur: {instant.epochSeconds}
-        </pre>
+        <pre>{JSON.stringify(outString, null, 2)}</pre>
       </header>
     </div>
   );
