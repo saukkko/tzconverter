@@ -21,9 +21,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     environment:
-      name: setup node and build
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,16 +35,10 @@ jobs:
           node-version: 16.x
           check-latest: true
           cache: npm
-      - name: Install App dependencies
-        run: npm ci
-      - name: Build app
-        run: npm run build
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
+      - name: Install deps and build
+        run: |
+            npm ci
+            npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
