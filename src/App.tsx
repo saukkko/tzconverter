@@ -1,25 +1,29 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 
 function App() {
-  const [instant, setInstant] = useState(Temporal.Now.instant());
+  const [now, setNow] = useState(Temporal.Now);
   const [date, setDate] = useState(0);
   const [time, setTime] = useState(0);
   const [offset, setOffset] = useState(
-    Temporal.Now.timeZone().getOffsetNanosecondsFor(Temporal.Now.instant()) /
-      1e9
+    now.timeZone().getOffsetNanosecondsFor(now.instant()) / 1e9
   );
   const [dateTime, setDateTime] = useState(date + time - offset);
-  const outString = useRef({
-    date: date,
-    time: time,
-    offset: offset,
-    selected: dateTime,
-    now: instant.epochSeconds,
-  });
+  const dateData = useMemo(() => {
+    return {
+      date: date,
+      time: time,
+      tzOffset: offset,
+      tzName: now.timeZone().toString(),
+      timestamp: dateTime,
+      timestampISO: Temporal.Instant.fromEpochSeconds(dateTime).toString(),
+    };
+  }, [dateTime, now]);
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setInstant(Temporal.Now.instant());
+      setNow(Temporal.Now);
+      setOffset(now.timeZone().getOffsetNanosecondsFor(now.instant()) / 1e9);
       setDateTime(date + time - offset);
     });
     return () => clearInterval(interval);
@@ -40,7 +44,7 @@ function App() {
           <input type={"date"} onChange={handleDatePicker}></input>
           <input type={"time"} onChange={handleTimePicker}></input>
         </p>
-        <pre>{JSON.stringify(outString, null, 2)}</pre>
+        <pre>{JSON.stringify(dateData, null, 2)}</pre>
       </header>
     </div>
   );
