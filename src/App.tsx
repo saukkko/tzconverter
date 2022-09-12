@@ -3,32 +3,51 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 import { DateInput, TimeInput, SelectInput } from "./Inputs";
 
+const tz = Temporal.Now.timeZone();
+
 function App() {
-  const tzToOffsetSeconds = (tz: Temporal.TimeZone) =>
-    tz.getOffsetNanosecondsFor(now.instant()) / 1e9;
+  const getOffset = (
+    fromTz?: Temporal.TimeZone,
+    toTz?: Temporal.TimeZoneLike
+  ) => {
+    if (!fromTz) fromTz = tz;
+    if (!toTz) toTz = new Temporal.TimeZone("UTC");
+
+    return (
+      fromTz.getOffsetNanosecondsFor(
+        Temporal.Now.zonedDateTimeISO(toTz).toInstant()
+      ) / 1e9
+    );
+  };
 
   const [now, setNow] = useState(Temporal.Now);
-  const [date, setDate] = useState(0);
-  const [time, setTime] = useState(0);
-  const [tz, setTz] = useState<Temporal.TimeZone>(now.timeZone());
-  const [offset, setOffset] = useState(tzToOffsetSeconds(tz));
-  const [dateTime, setDateTime] = useState(date + time - offset);
+  const [compareTz, setCompareTz] = useState(now.timeZone());
+
+  const [date, setDate] = useState(
+    now.instant().epochSeconds - (now.instant().epochSeconds % 86400)
+  );
+  const [time, setTime] = useState(
+    now.instant().epochSeconds - date + getOffset(compareTz)
+  );
   const dateData = useMemo(() => {
     return {
-      date: date,
-      time: time,
-      tzOffset: offset,
-      tzName: tz.toString(),
-      epochTimeISO: Temporal.Instant.fromEpochSeconds(dateTime).toString(),
-      epochTime: dateTime,
+      currentEpochTime: now.instant().epochSeconds,
+      homeTzOffset: getOffset(tz),
+      homeTzName: tz.toString(),
+      selectedTzOffset: getOffset(compareTz),
+      selectedTzName: compareTz.toString(),
+      selectedDate: date,
+      selectedTime: time,
+      selectedEpochTimeISO: Temporal.Instant.fromEpochSeconds(
+        date + time - getOffset(compareTz)
+      ).toString(),
+      selectedEpochTime: date + time - getOffset(compareTz),
     };
-  }, [dateTime, tz, offset]);
+  }, [date, time, compareTz]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(Temporal.Now);
-      setOffset(tzToOffsetSeconds(tz));
-      setDateTime(date + time - offset);
     });
     return () => clearInterval(interval);
   });
@@ -48,16 +67,18 @@ function App() {
     "Africa/Cairo",
   ];
 
+  const nanToZero = (v: number) => (isNaN(v) ? 0 : v);
+
   const handleDatePicker = (evt: React.ChangeEvent<HTMLInputElement>) => {
-    setDate(evt.target.valueAsNumber / 1000);
+    setDate(nanToZero(evt.target.valueAsNumber) / 1000);
   };
 
   const handleTimePicker = (evt: React.ChangeEvent<HTMLInputElement>) => {
-    setTime(evt.target.valueAsNumber / 1000);
+    setTime(nanToZero(evt.target.valueAsNumber) / 1000);
   };
 
   const handleTimeZoneSelect = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-    setTz(new Temporal.TimeZone(evt.target.value));
+    setCompareTz(new Temporal.TimeZone(evt.target.value));
   };
 
   const tzData = timeZones
@@ -65,7 +86,7 @@ function App() {
       return {
         continent: x.split("/")[0],
         tzString: x,
-        offsetSeconds: tzToOffsetSeconds(new Temporal.TimeZone(x)),
+        offsetSeconds: getOffset(new Temporal.TimeZone(x), "UTC"),
       };
     })
     .sort((a, b) => a.offsetSeconds - b.offsetSeconds);
@@ -84,9 +105,24 @@ function App() {
             Local time (your computer)
           </legend>
           <p>
-            <DateInput onChange={handleDatePicker} />
-            <TimeInput onChange={handleTimePicker} />
+            <DateInput
+              onChange={handleDatePicker}
+              value={Temporal.PlainDate.from(
+                Temporal.Instant.fromEpochSeconds(date).toString({
+                  timeZone: "UTC",
+                })
+              ).toString()}
+            />
+            <TimeInput
+              onChange={handleTimePicker}
+              value={Temporal.PlainTime.from(
+                Temporal.Instant.fromEpochSeconds(time).toString({
+                  timeZone: "UTC",
+                })
+              ).toString({ smallestUnit: "minute" })}
+            />
             <SelectInput
+              defaultValue={tz.toString()}
               onChange={handleTimeZoneSelect}
               timeZones={tzData}
               id="tz"
