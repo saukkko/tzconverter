@@ -1,7 +1,8 @@
 import "./app.css";
 import React, { useEffect, useMemo, useState } from "react";
 import { Temporal } from "@js-temporal/polyfill";
-import { DateInput, TimeInput, SelectInput } from "./Inputs";
+import _ from "lodash";
+import { DateInput, TimeInput, DataListInput } from "./Inputs";
 import { timeZones } from "./utils/timezones";
 
 const tz = Temporal.Now.timeZone();
@@ -63,20 +64,27 @@ function App() {
     setTime(nanToZero(evt.target.valueAsNumber) / 1000);
   };
 
-  const handleTimeZoneSelect = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-    setCompareTz(new Temporal.TimeZone(evt.target.value));
+  const handleTimeZoneSelect = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    timeZones.includes(evt.target.value)
+      ? setCompareTz(new Temporal.TimeZone(evt.target.value))
+      : setCompareTz(compareTz);
   };
 
   timeZones.push("UTC");
-  const tzData = timeZones
-    .map((x) => {
-      return {
-        continent: x.split("/")[0],
-        tzString: x,
-        offsetSeconds: getOffset(new Temporal.TimeZone(x), "UTC"),
-      };
-    })
-    .sort((a, b) => a.offsetSeconds - b.offsetSeconds);
+  const tzData = _.uniqBy(
+    _.sortBy(
+      timeZones.map((x) => {
+        return {
+          continent: x.split("/")[0],
+          tzString: x,
+          offsetSeconds: getOffset(new Temporal.TimeZone(x), "UTC"),
+        };
+      }),
+      ["offsetSeconds", "tzString"]
+    ),
+    "tzString"
+  );
+  // .sort((a, b) => a.offsetSeconds - b.offsetSeconds);
 
   return (
     <div className="md:container md:mx-auto p-2">
@@ -91,7 +99,7 @@ function App() {
           <legend className="mx-5 px-1 text-sm">
             Local time (your computer)
           </legend>
-          <p>
+          <p className="my-1">
             <DateInput
               onChange={handleDatePicker}
               value={Temporal.PlainDate.from(
@@ -108,7 +116,7 @@ function App() {
                 })
               ).toString({ smallestUnit: "minute" })}
             />
-            <SelectInput
+            {/*             <SelectInput
               defaultValue={tz.toString()}
               onChange={handleTimeZoneSelect}
               timeZones={tzData}
@@ -116,6 +124,22 @@ function App() {
             >
               Timezone
             </SelectInput>
+          </p>
+          <p className="my-1"> */}
+            <DataListInput
+              timeZones={tzData}
+              now={now}
+              inputProps={{
+                type: "search",
+                id: "zonelist",
+                list: "zones",
+                defaultValue: tz.toString(),
+                onChange: handleTimeZoneSelect,
+              }}
+              dataListProps={{
+                id: "zones",
+              }}
+            ></DataListInput>
           </p>
         </fieldset>
         <pre>{JSON.stringify(dateData, null, 2)}</pre>
