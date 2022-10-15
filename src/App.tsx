@@ -2,6 +2,7 @@ import "./app.css";
 import React, { useEffect, useMemo, useState } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 import { DateInput, TimeInput, SelectInput } from "./Inputs";
+import { timeZones } from "./utils/timezones";
 
 const tz = Temporal.Now.timeZone();
 
@@ -51,21 +52,6 @@ function App() {
     });
     return () => clearInterval(interval);
   });
-
-  const timeZones = [
-    "UTC",
-    "Africa/Algiers",
-    "Africa/El_Aaiun",
-    "Africa/Tripoli",
-    "Europe/Helsinki",
-    "Europe/London",
-    "America/Los_Angeles",
-    "America/Phoenix",
-    "America/New_York",
-    "Asia/Tokyo",
-    "Australia/Sydney",
-    "Africa/Cairo",
-  ];
 
   const nanToZero = (v: number) => (isNaN(v) ? 0 : v);
 
