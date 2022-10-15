@@ -6,4 +6,5 @@ export const timeZones = tzFile
   .split("\n")
   .filter((row) => !row.startsWith("#"))
   .map((row) => row.split("\t"))
-  .map((x) => x[2]);
+  .map((x) => x[2])
+  .filter((x) => x);

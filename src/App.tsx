@@ -67,6 +67,7 @@ function App() {
     setCompareTz(new Temporal.TimeZone(evt.target.value));
   };
 
+  timeZones.push("UTC");
   const tzData = timeZones
     .map((x) => {
       return {
